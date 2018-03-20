@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>发表新帖</title>
+    <link rel="stylesheet" href="/static/layui/font/font_24081_lyaxcfn8fp1iqkt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1506053054561" />
+    <link rel="stylesheet" href="/static/layui/css/global.css" charset="utf-8" />
+</head>
+
+<body>
+    <div class="header">
+        <div class="main" ms-controller="user">
+            <div style="margin-top:18px; position: absolute;">
+                <a class="" style="color: #F0F0F0;" href="/">享你所想</a>
+            </div>
+            <div class="nav-user" :if="@login==false">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+            <ul class="layui-nav layui-layout-right" :if="@login==true">
+                <li class="layui-nav-item">
+                    <a href="/static/user/home_page.html">
+                        <img ms-attr="{src: @avert}" class="layui-nav-img">
+                        {{@name}}
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/static/user/setting.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe620;</i>基本设置</a></dd>
+                        <dd><a href="/static/user/home_page.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe68e;</i>我的空间</a></dd>
+                        <dd><a href="/static/user/message.html" ms-controller="message"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe63a;</i> 消息<span class="layui-badge" :if="@count>0">{{count}}</span></a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item"><a href="javascript:;" onclick="logout()"><i class="iconfont icon-tuichu" style="top: 0; font-size: 22px;"></i>退出</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="layui-container fly-marginTop" ms-controller="article">
+        <div class="fly-panel" pad20 style="padding-top: 5px;">
+            <div class="layui-form layui-form-pane">
+                <div class="layui-tab layui-tab-brief" lay-filter="user">
+                    <ul class="layui-tab-title">
+                        <li class="layui-this">发表新帖</li>
+                    </ul>
+                    <div class="layui-form layui-tab-content" id="LAY_ucm" style="padding: 20px 0;">
+                        <div class="layui-tab-item layui-show">
+                            <div class="layui-row layui-col-space15 layui-form-item">
+                                <div class="layui-col-md3">
+                                    <label class="layui-form-label">类目</label>
+                                    <div class="layui-input-block" ms-controller="catalog">
+                                        <select id="catalog_id" lay-verify="required" name="class" lay-filter="column">
+                                            <option></option>
+                                            <option :for="(index, el) in @catalog" :if="@index!=0" ms-attr="{value:el.id}">{{el.name}}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="layui-col-md9">
+                                    <label for="L_title" class="layui-form-label">标题</label>
+                                    <div class="layui-input-block">
+                                        <input type="text" id="L_title" name="title" required lay-verify="required" autocomplete="off" class="layui-input" ms-duplex="@title"> </div>
+                                </div>
+                            </div>
+                            <div class="layui-form-item layui-form-text">
+                                <div class="layui-input-block">
+                                    <textarea id="L_content" name="content" required lay-verify="required" placeholder="详细描述" class="layui-textarea fly-editor" style="height: 260px;" ms-value="@content"></textarea>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <a class="layui-btn" lay-filter="*" onclick="publish()">立即发布</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <script>
+    var host = alloy_setting.request_url;
+
+    layui.use('element', function() {
+        var $ = layui.jquery,
+            element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+    });
+
+    // 头用户信息
+    user_vm = avalon.define({
+        $id: "user",
+        name: "",
+        avert: "",
+        token: "",
+        signature: "",
+        login: false
+    })
+
+    message_vm = avalon.define({
+        $id: "message",
+        count: 0,
+    })
+
+    catalog_vm = avalon.define({
+        $id: "catalog",
+        catalog: [],
+        count: ""
+    })
+
+    article_vm = avalon.define({
+        $id: "article",
+        content: "",
+        title: ""
+    })
+
+    layui.use('layer', function() {
+        var layer = layui.layer;
+    });
+
+    if (Cookies.get("user") != undefined) {
+        var user = Cookies.getJSON("user");
+        user_vm.name = user.name;
+        user_vm.avert = "http://owgplcxzz.bkt.clouddn.com/" + user.avert;
+        user_vm.token = user.token_id;
+        user_vm.login = true;
+    }
+
+    if (user_vm.token != "") {
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('AUTHORIZATION', "token " + user_vm.token);
+            }
+        });
+    }
+
+    var request_url = host + "/api/image/token"
+    var token = "";
+    $.ajax({
+        type: "GET",
+        url: request_url,
+        async: false,
+        success: function(data) {
+            if (data.status == 200) {
+                token = data.data.token;
+            } else {
+                if (data.status == 401) {
+                    Cookies.remove("user");
+                    window.location.href = host + "/index.html";
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        }
+    });
+
+    // 富文本图片上传
+    var index = "";
+    layui.use('layedit', function() {
+        var layedit = layui.layedit;
+        layedit.set({
+            uploadImage: {
+                url: host + "/api/image/upload" //接口url
+                    ,
+                data: { "token": token },
+                contentType: 'multipart/form-data',
+            }
+        });
+
+        index = layedit.build('L_content', {
+            tool: ['face', 'image', '|', 'strong', "italic", "underline"]
+        }); //建立编辑器
+
+    });
+
+    var request_url = host + "/api/user/message/unread"
+    $.ajax({
+        type: "GET",
+        url: request_url,
+        success: function(data) {
+            if (data.status == 200) {
+                console.log(data);
+                var count = data.data;
+                message_vm.count = count;
+            } else {
+                if (data.status == 401) {
+                    Cookies.remove("user");
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        }
+    });
+
+    // 获取分类
+    if (Cookies.getJSON("catalog") != undefined) {
+        var catalog = Cookies.getJSON("catalog");
+        catalog_vm.catalog = catalog.data;
+    }
+
+    function logout() {
+        var request_url = host + "/api/user/logout";
+        var data = {};
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                console.log(data);
+                if (data.status == 200) {
+                    // 登出成功 清楚缓存
+                    Cookies.remove('user');
+                    user_vm.login = false;
+                    window.location.href = host + "/index.html";
+                } else {
+                    layer.msg(data.msg);
+                }
+            }
+        });
+    }
+
+    function publish() {
+
+        var request_url = host + "/api/user/article/create";
+        var catalog_id = ($("#catalog_id option:selected").attr("value"));
+        if (catalog_id == undefined) {
+            layer.msg("请选择类目", { icon: 5 });
+            return;
+        }
+
+
+        var layedit = layui.layedit;
+        var content = layedit.getContent(index)
+
+        if (content == "") {
+            layer.msg("内容不能为空", { icon: 5 });
+            return;
+        }
+
+        if (article_vm.title == "") {
+            layer.msg("标题不能为空", { icon: 5 });
+            return;
+        }
+
+        var data = { "catalog_id": catalog_id, "title": article_vm.title, "content": content };
+
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                console.log(data);
+                if (data.status == 200) {
+                    // 发布成功
+                    layer.msg("发布成功", { icon: 6 });
+                    window.location.href = host + "/index.html";
+                } else {
+                    if (data.status == 401) {
+                        Cookies.remove("user");
+                        window.location.href = host + "/index.html";
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+    }
+    </script>
+</body>
+
+</html>

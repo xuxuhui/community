@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>PY</title>
+    <link rel="stylesheet" href="/static/layui/font/font_24081_1u8t0gopzoxbt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1506804565238" />
+    <link rel="stylesheet" href="/static/layui/css/global.css?t=1506804565238" charset="utf-8" />
+</head>
+
+<body>
+    <div class="header">
+        <div class="main" ms-controller="user">
+            <div style="margin-top:18px; position: absolute;">
+             <a class="" style="color: #F0F0F0;" href="/">享你所想</a>
+            </div>
+            <div class="nav-user" :if="@login==false">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+            <ul class="layui-nav layui-layout-right" :if="@login==true">
+                <li class="layui-nav-item">
+                    <a href="/static/user/home_page.html">
+                        <img ms-attr="{src: @avert}" class="layui-nav-img">
+                        {{@name}}
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/static/user/setting.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe620;</i>基本设置</a></dd>
+                        <dd><a href="/static/user/home_page.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe68e;</i>我的空间</a></dd>
+                        <dd><a href="/static/user/message.html" ms-controller="message"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe63a;</i> 消息<span class="layui-badge" :if="@count>0">{{count}}</span></a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item"><a href="javascript:;" onclick="logout()"><i class="iconfont icon-tuichu" style="top: 0; font-size: 22px;"></i>退出</a></li>
+            </ul>
+
+            <!-- </div> -->
+        </div>
+    </div>
+    <div class="layui-container">
+        <div class="layui-row layui-col-space15">
+            <div class="fly-column layui-col-md8">
+                <div class="fly-tab" ms-controller="catalog">
+                    <div class="layui-tab layui-tab-brief">
+                        <ul class="layui-tab-title">
+                            <li :for="(index, el) in @catalog" :if="@index==0" ms-class="@id==@el.id? @acvtive : ''" ms-attr="{id: ''}" onclick="getArticle(this)">{{el.name}}</li>
+                            <li :for="(index, el) in @catalog" :if="@index!=0" ms-attr="{id: @el.id}" ms-class="@id==@el.id? @acvtive : ''" onclick="getArticle(this)"> {{el.name}} </li>
+                        </ul>
+                    </div>
+                    <i class="layui-icon fly-search"></i>
+                </div>
+            </div>
+            <div class="layui-col-md4">
+                <div class="jie-add">
+                    <a href="javascript:;" class="layui-btn" style="width: 100%;" onclick="publish()">发表新帖</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md8 detail" ms-controller="article">
+                <div class="fly-panel detail-box">
+                    <ul class="fly-panel fly-list" style="min-height: 500px" >
+                        <li :for="(index, el) in @article" ms-attr="{id: @el.id}" onclick="detail(this)">
+                            <a href="javascript:;" class="fly-avatar"> 
+                          <img ms-attr="{src: @el.avert}" ms-attr="{alt: @el.passport_name}" /> 
+                        </a>
+                            <h2> 
+                            <a href="javascript:;">{{el.title}}</a> 
+                        </h2>
+                            <div class="fly-list-info">
+                                <a href="javascript:;" user="">
+                                    <cite>{{el.passport_name}}</cite>
+                                </a>
+                                <span>{{el.date}}</span>
+                                <span>{{el.catalog_name}}</span>
+                                <span class="fly-list-nums"> <i class="iconfont icon-pinglun1" title="回答"></i> {{el.reply}}</span>
+                            </div>
+                        </li>
+                    </ul>
+                    <div id="demo7" style="text-align: center;"></div>
+                </div>
+            </div>
+            <!-- <div class="layui-col-md4">
+                <dl class="fly-panel fly-list-one">
+                    <dt class="fly-panel-title">本周热议</dt>
+                    <dd> <a href="/jie/15526/">社区已完成升级，将重点打造 “分享” 专栏</a> <span><i class="iconfont icon-pinglun1"></i> 25</span> </dd>
+                    <dd> <a href="/jie/15306/">求助----数据表格 response返回数据，表格加载出错</a> <span><i class="iconfont icon-pinglun1"></i> 19</span> </dd>
+                    <dd> <a href="/jie/15478/">怎么动态获取输入框的值，文件上传时，传入后台</a> <span><i class="iconfont icon-pinglun1"></i> 19</span> </dd>
+                    <dd> <a href="/jie/15467/">layerui图片上传的时候图片能压缩后再进行上传吗？</a> <span><i class="iconfont icon-pinglun1"></i> 18</span> </dd>
+                    <dd> <a href="/jie/15242/"> layui如何使用ajax向后台提交数据?</a> <span><i class="iconfont icon-pinglun1"></i> 18</span> </dd>
+                    <dd> <a href="/jie/15400/">layui数据表自动渲染分页问题</a> <span><i class="iconfont icon-pinglun1"></i> 17</span> </dd>
+                    <dd> <a href="/jie/15360/">经过两天的挣扎，不得不发个帖子求助各位大佬！如何使用layui在手机端上传文件（图片）?</a> <span><i class="iconfont icon-pinglun1"></i> 16</span> </dd>
+                    <dd> <a href="/jie/15363/">一个社区的朋友帮我弄了layui的分页 效果都好了但是有个小问题，每次点击下一页参数都在拼接</a> <span><i class="iconfont icon-pinglun1"></i> 14</span> </dd>
+                    <dd> <a href="/jie/15403/">表单验证的问题 </a> <span><i class="iconfont icon-pinglun1"></i> 14</span> </dd>
+                    <dd> <a href="/jie/15514/">checkbox 选中时，对勾为什么不显示呢？</a> <span><i class="iconfont icon-pinglun1"></i> 14</span> </dd>
+                </dl>
+            </div> -->
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <script>
+    var host = alloy_setting.request_url;
+    var img_host = alloy_setting.img_host;
+
+    layui.use('element', function() {
+        var $ = layui.jquery,
+            element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+    });
+
+    message_vm = avalon.define({
+        $id: "message",
+        count: 0,
+    })
+
+    user_vm = avalon.define({
+        $id: "user",
+        name: "",
+        avert: "",
+        token: "",
+        login: false
+    })
+
+    catalog_vm = avalon.define({
+        $id: "catalog",
+        catalog: [],
+        count: "",
+        acvtive: "layui-this",
+        id: 2
+    })
+
+    article_vm = avalon.define({
+        $id: "article",
+        article: [],
+        count: 0,
+    })
+
+    layui.use('layer', function() {
+        var layer = layui.layer;
+    });
+
+    if (Cookies.get("user") != undefined) {
+        var user = Cookies.getJSON("user");
+        user_vm.name = user.name;
+        user_vm.avert = img_host + user.avert;
+        user_vm.token = user.token_id;
+        user_vm.login = true;
+    }
+
+    if (user_vm.token != "") {
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('AUTHORIZATION', "token " + user_vm.token);
+            }
+        });
+    }
+
+    // 获取大分类
+    $(document).ready(function() {
+
+        var parama = window.location.search
+        var url_parse = url_util;
+        var obj = url_parse.parama(parama)
+        var catalog_id = "";
+        if (obj['catalog_id'] != undefined && obj['catalog_id'] != "") {
+            catalog_id = obj["catalog_id"];
+            catalog_vm.id = catalog_id;
+        }
+        console.log(catalog_vm.id);
+        // console.log(catalog_id)
+
+        // 页面加载后获取文章分类
+        var request_url = host + "/api/user/catalog/list";
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    catalog_vm.count = ret_data.count;
+                    catalog_vm.catalog = ret_data.data;
+                    Cookies.set("catalog", ret_data);
+                    console.log(catalog_vm.catalog);
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+
+        // 获取未读消息量
+        if (user_vm.login) {
+            var request_url = host + "/api/user/message/unread"
+            $.ajax({
+                type: "GET",
+                url: request_url,
+                success: function(data) {
+                    if (data.status == 200) {
+                        var count = data.data;
+                        message_vm.count = count;
+                    } else {
+                        if (data.status == 401) {
+                            Cookies.remove("user");
+                        } else {
+                            layer.msg(data.msg, { icon: 5 });
+                        }
+                    }
+                }
+            });
+        }
+
+        // 获取文章
+        var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id;
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    var list = ret_data.data;
+                    var count = ret_data.count;
+                    // var date_util = alloy_setting.date_util;
+
+                    list.forEach(function(item) {
+                        if (item["avert"] != "") {
+                            item["avert"] = img_host + item["avert"];
+                        }
+                        item["date"] = date_util.time(item["created"]);
+                    })
+                    article_vm.article = list;
+                    article_vm.count = count;
+                    layui.use(['laypage', 'layer'], function() {
+                        var laypage = layui.laypage,
+                            layer = layui.layer;
+
+                        //完整功能
+                        laypage.render({
+                            elem: 'demo7',
+                            count: article_vm.count,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function(obj) {
+                                var index = obj.curr;
+                                var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id + "&page=" + index;
+                                $.ajax({
+                                    type: "GET",
+                                    url: request_url,
+                                    success: function(data) {
+                                        if (data.status == 200) {
+                                            var ret_data = data.data;
+                                            var list = ret_data.data;
+                                            var count = ret_data.count;
+
+                                            list.forEach(function(item) {
+                                                if (item["avert"] != "") {
+                                                    item["avert"] = img_host + item["avert"];
+                                                }
+                                                item["date"] = date_util.time(item["created"]);
+                                            })
+                                            article_vm.article = list;
+                                            article_vm.count = count;
+                                        } else {
+                                            layer.msg(data.msg, { icon: 5 });
+                                        }
+                                    }
+                                });
+
+                                // console.log(obj.curr);
+                            }
+                        });
+                    })
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    });
+
+    function logout() {
+        var request_url = host + "/api/user/logout";
+        var data = {};
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                console.log(data);
+                if (data.status == 200) {
+                    // 登出成功 清楚缓存
+                    Cookies.remove('user');
+                    Cookies.remove("redictUrl");
+                    user_vm.login = false;
+                    window.location.href = host + "/index.html";
+                } else {
+                    layer.msg(data.msg);
+                }
+            }
+        });
+    }
+
+    function publish() {
+
+        // 判断用户登录状态
+        var request_url = host + "/api/user/isLogin";
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    window.location.href = host + "/static/user/publish.html";
+                } else {
+                    Cookies.set("redictUrl", host + "/static/user/publish.html");
+                    window.location.href = host + "/static/user/login.html";
+                    // layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    }
+
+    function getArticle(obj) {
+
+        var id = $(obj).attr("id");
+        catalog_vm.id = id;
+        if (id == "") {
+            catalog_vm.id = 2;
+        }
+        var request_url = host + "/api/user/article/list?catalog_id=" + id;
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    var list = ret_data.data;
+                    var count = ret_data.count;
+                    // var date_util = alloy_setting.date_util;
+
+                    list.forEach(function(item) {
+                        if (item["avert"] != "") {
+                            item["avert"] = img_host + item["avert"];
+                        }
+                        item["date"] = date_util.time(item["created"]);
+                    })
+                    article_vm.article = list;
+                    article_vm.count = count;
+
+                    layui.use(['laypage', 'layer'], function() {
+                        var laypage = layui.laypage,
+                            layer = layui.layer;
+
+                        //完整功能
+                        laypage.render({
+                            elem: 'demo7',
+                            count: article_vm.count,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function(obj) {
+                                var index = obj.curr;
+                                var request_url = host + "/api/user/article/list?catalog_id=" + id + "&page=" + index;
+                                $.ajax({
+                                    type: "GET",
+                                    url: request_url,
+                                    success: function(data) {
+                                        if (data.status == 200) {
+                                            var ret_data = data.data;
+                                            var list = ret_data.data;
+                                            var count = ret_data.count;
+
+                                            list.forEach(function(item) {
+                                                if (item["avert"] != "") {
+                                                    item["avert"] = img_host + item["avert"];
+                                                }
+                                                item["date"] = date_util.time(item["created"]);
+                                            })
+                                            article_vm.article = list;
+                                            article_vm.count = count;
+                                        } else {
+                                            layer.msg(data.msg, { icon: 5 });
+                                        }
+                                    }
+                                });
+
+                                // console.log(obj.curr);
+                            }
+                        });
+                    })
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    }
+
+    function detail(obj) {
+        // 直接带id跳转
+        var id = $(obj).attr("id");
+        window.location.href = host + "/static/user/content_detail.html?id=" + id + "&catalog_id=" + catalog_vm.id;
+    }
+    </script>
+</body>
+
+</html>

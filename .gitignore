@@ -102,4 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-.community/settings.py
+community/settings.py
+html/static/node_modules/
+html/static/jquery
+html/.DS_Store

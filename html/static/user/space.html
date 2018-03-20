@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Py</title>
+    <link rel="stylesheet" href="/static/layui/font/font_24081_1u8t0gopzoxbt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1506804565238" />
+    <link rel="stylesheet" href="/static/layui/css/global.css?t=1506804565238" charset="utf-8" />
+   <!--  <link rel="stylesheet" href="//at.alicdn.com/t/font_24081_lyaxcfn8fp1iqkt9.css">
+    <link rel="stylesheet" href="//res.layui.com/layui/dist/css/layui.css?t=1506804565238">
+    <link rel="stylesheet" href="//res.layui.com/css/fly/global.css?t=1506804565238" charset="utf-8"> -->
+</head>
+
+<body>
+    <div class="header">
+        <div class="main" ms-controller="user">
+            <!-- <a class="fly-logo" href="/" title="python">
+                <img src="http://owgplcxzz.bkt.clouddn.com/pylogo11.jpg" alt="python">
+            </a> -->
+            <a class="logo" href="/" title="Fly">PY社区</a> 
+            <div class="nav">
+            </div>
+            <div class="nav-user" :if="@login==false">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+            <div class="nav-user" :if="@login==true">
+                <a class="avatar" href="/user/"> <img ms-attr="{src: @avert}" /> <cite>{{@name}}</cite> </a>
+                <div class="nav">
+                    <a href="/static/user/setting.html"><i class="iconfont icon-shezhi"></i>设置</a>
+                    <a href="/static/user/space.html"><i class="iconfont"></i>我的空间</a>
+                    <a href="javascript:;" onclick="logout()"><i class="iconfont icon-tuichu" style="top: 0; font-size: 22px;"></i>退出</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="layui-container fly-marginTop">
+        <div class="site-tree-mobile layui-hide"> <i class="layui-icon">&#xe602;</i></div>
+        <div class="site-mobile-shade"></div>
+        <div class="fly-panel fly-panel-user" pad20>
+            <div class="layui-tab layui-tab-brief" lay-filter="user" id="LAY_uc">
+                <ul class="layui-tab-title" id="LAY_mine">
+                    <li data-type="mine-jie" lay-id="index" class="layui-this">我发的帖（<span>0</span>）</li>
+                    <li data-type="collection" data-url="/collection/find/" lay-id="collection">我收藏的帖（<span>0</span>）</li>
+                   <!--  <li data-type="collection" data-url="/collection/find/" lay-id="collection">我关注的人（<span>0</span>）</li>
+                    <li data-type="collection" data-url="/collection/find/" lay-id="collection">被关注的人（<span>0</span>）</li> -->
+                </ul>
+                <div class="layui-tab-content" id="LAY_ucm" style="padding: 20px 0;">
+                    <div class="layui-tab-item layui-show">
+                        <ul class="mine-view jie-row"></ul>
+                        <div id="LAY_page"></div>
+                    </div>
+                    <div class="layui-tab-item">
+                        <ul class="mine-view jie-row"></ul>
+                        <div id="LAY_page1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <script>
+        var host = alloy_setting.request_url;
+        var img_host = alloy_setting.img_host;
+
+        layui.use('element', function() {
+            var $ = layui.jquery,
+            element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+        });
+
+        // 获取文章列表量
+        article_vm = avalon.define({
+            $id: "article",
+            articles: [],
+            owner: 0,
+            collects: 0,
+        })
+
+        // 头用户信息
+        user_vm = avalon.define({
+            $id: "user",
+            name: "",
+            avert: "",
+            token: "",
+            signature: "",
+            login: false
+        })
+
+        if (Cookies.get("user") != undefined) {
+            var user = Cookies.getJSON("user");
+            user_vm.name = user.name;
+            user_vm.avert = "http://owgplcxzz.bkt.clouddn.com/" + user.avert;
+            user_vm.token = user.token_id;
+            user_vm.login = true;
+        }
+
+        $(document).ready(function() {
+            // 获取发表文章列表
+            var request_url = host + "/api/user/article/list/owner=true";
+            $.ajax({
+                type: "GET",
+                async: false,
+                url: request_url,
+                success: function(data) {
+                    if (data.status == 200) {
+                        var ret_data = data.data;
+                    } else {
+                        flag = false;
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            });
+        })
+
+    </script>
+</body>
+
+</html>

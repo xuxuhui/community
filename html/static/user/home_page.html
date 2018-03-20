@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>主页 - Py</title>
+    <link rel="stylesheet" href="/static/layui/font/font_24081_lyaxcfn8fp1iqkt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1507450219139">
+    <link rel="stylesheet" href="/static/layui/css/global.css?t=1507450219139" charset="utf-8">
+</head>
+
+<body class="fly-full">
+    <div class="header">
+        <div class="main" ms-controller="user">
+            <div style="margin-top:18px; position: absolute;">
+                <a class="" style="color: #F0F0F0;" href="/">享你所想</a>
+            </div>
+            <div class="nav-user" :if="@login==false">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+            <ul class="layui-nav layui-layout-right" :if="@login==true">
+                <li class="layui-nav-item">
+                    <a href="/static/user/home_page.html">
+                        <img ms-attr="{src: @avert}" class="layui-nav-img">
+                        {{@name}}
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/static/user/setting.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe620;</i>基本设置</a></dd>
+                        <dd><a href="/static/user/home_page.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe68e;</i>我的空间</a></dd>
+                        <dd><a href="/static/user/message.html" ms-controller="message"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe63a;</i> 消息<span class="layui-badge" :if="@count>0">{{count}}</span></a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item"><a href="javascript:;" onclick="logout()"><i class="iconfont icon-tuichu" style="top: 0; font-size: 22px;"></i>退出</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="fly-home fly-panel" style="background-image: url();" ms-controller="author">
+        <img ms-attr="{src: @avert}">
+        <h1> 
+            {{name}}
+        </h1>
+        <p class="fly-home-info">
+            <i class="iconfont icon-shijian"></i>
+            <span>{{created}} 加入</span>
+            <i class="iconfont icon-chengshi"></i>
+        </p>
+        <p class="fly-home-sign">（{{sign}}）</p>
+    </div>
+    <div class="layui-container">
+        <div class="layui-row layui-col-space15">
+            <div class="fly-column">
+                <div class="fly-tab">
+                    <div class="layui-tab layui-tab-brief" ms-controller="user">
+                        <ul class="layui-tab-title" >
+                            <li class="layui-this" onclick="problem(3)">提问</li>
+                            <li class="" onclick="share(4)">分享</li>
+                            <li class="" onclick="reply()">回答</li>
+                            <li class="layui-hide-xs layui-hide-sm layui-show-md-inline-block">
+                                <span class="fly-mid"></span>
+                            </li>
+                            <li class="" onclick="myCollect()" :if="@user_id==@passport_id">我的收藏</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="fly-home-jie">
+                <div class="fly-panel" ms-controller="article" id="article">
+                    <ul class="jie-row">
+                        <li :for="(index, el) in @article" ms-attr="{id: @el.id}" ms-click="@detail(el)">
+                            <a href="javascript:;" class="jie-title" style="color: #01AAED">{{el.title}}</a>
+                            <i>{{el.date}}</i>
+                            <em class="layui-hide-xs">{{el.pv}}阅/{{el.reply}}答</em>
+                        </li>
+                    </ul>
+                    <div class="fly-home-jie" id="problem_page" style="text-align: center;"></div>
+                </div>
+                <div class="fly-panel" id="reply" style="display: none;" ms-controller="reply">
+                    <ul class="jie-row">
+                        <li :for="(index, el) in @contents">
+                            <p style="padding: 15px;">
+                                <span>{{el.date}}</span> 在
+                                <a href="javascript:;" ms-click="@detail(el)" target="_blank"  style="color: #01AAED">
+                                    {{el.title}}
+                                </a>中回答：
+                            </p>
+                            <div class="home-dacontent" ms-attr="{id: 'content' + el.id}"></div>
+                        </li>
+                    </ul>
+                    <div class="fly-home-jie" id="reply_page" style="text-align: center;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <script>
+    var host = alloy_setting.request_url;
+    var img_host = alloy_setting.img_host;
+
+    layui.use('element', function() {
+        var $ = layui.jquery,
+            element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+    });
+
+    layui.use('layer', function() {
+        var layer = layui.layer;
+    });
+
+    user_vm = avalon.define({
+        $id: "user",
+        name: "",
+        avert: "",
+        token: "",
+        login: false,
+        user_id: "",
+        passport_id: "",
+    })
+
+    message_vm = avalon.define({
+        $id: "message",
+        count: 0,
+    })
+
+    author_vm = avalon.define({
+        $id: "author",
+        name: "",
+        avert: "",
+        sign: "",
+        passport_id: "",
+        created: "",
+    })
+
+    article_vm = avalon.define({
+        $id: "article",
+        article: [],
+        detail: function(el) {
+            window.location.href = host + "/static/user/content_detail.html?id=" + el.id + "&catalog_id=" + el.catalog_id;
+        }
+    })
+
+    reply_vm = avalon.define({
+        $id: "reply",
+        contents: [],
+        detail: function(el) {
+            window.location.href = host + "/static/user/content_detail.html?id=" + el.article_id + "&catalog_id=" + el.article_catalog;
+        }
+    })
+
+    console.log(Cookies.get("user") + "user.....");
+
+    if (Cookies.get("user") != undefined) {
+        var user = Cookies.getJSON("user");
+        user_vm.name = user.name;
+        user_vm.avert = img_host + user.avert;
+        user_vm.token = user.token_id;
+        user_vm.login = true;
+        user_vm.user_id = user.passport_id;
+    }
+
+    if (user_vm.token != "") {
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('AUTHORIZATION', "token " + user_vm.token);
+            }
+        });
+    }
+
+    if (user_vm.token != "") {
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('AUTHORIZATION', "token " + user_vm.token);
+            }
+        });
+    }
+
+    // 获取用户信息
+    $(document).ready(function() {
+
+        var parama = window.location.search
+        var url_parse = url_util;
+        var obj = url_parse.parama(parama)
+        var id = "";
+        if (obj['id'] != undefined && obj['id'] != "") {
+            id = obj["id"];
+        }
+
+        var request_url = host + "/api/user/detail?id=" + id;
+        $.ajax({
+            type: "GET",
+            async: false,
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    author_vm.name = ret_data.name;
+                    author_vm.sign = ret_data.signature;
+                    author_vm.passport_id = ret_data.id;
+                    user_vm.passport_id = ret_data.id;
+                    author_vm.avert = img_host + ret_data.avert;
+                    author_vm.created = date_util.local_date(ret_data.created);
+                } else {
+                    if (data.status == 401) {
+                        Cookies.remove("user");
+                        user_vm.login = false;
+                        layui.use('layer', function() {
+                            var layer = layui.layer;
+                            layer.msg("请先登录", { icon: 5 });
+                            Cookies.set("redictUrl", host + "/static/user/home_page.html");
+                            window.location.href = host + "/static/user/login.html";
+                        });
+                    } else {
+                        layui.use('layer', function() {
+                            var layer = layui.layer;
+                            layer.msg(data.msg, { icon: 5 });
+                        });
+                    }
+                }
+            }
+        });
+
+        // 获取未读消息量
+        if (user_vm.login) {
+            var request_url = host + "/api/user/message/unread"
+            $.ajax({
+                type: "GET",
+                url: request_url,
+                success: function(data) {
+                    if (data.status == 200) {
+                        var count = data.data;
+                        message_vm.count = count;
+                    } else {
+                        if (data.status == 401) {
+                            Cookies.remove("user");
+                        } else {
+                            layer.msg(data.msg, { icon: 5 });
+                        }
+                    }
+                }
+            });
+        }
+
+        // 获取提问列表
+        var catalog_id = 3;
+        var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id + "&passport_id=" + author_vm.passport_id;
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    var list = ret_data.data;
+                    var count = ret_data.count;
+                    list.forEach(function(item) {
+                        item["date"] = date_util.time(item["created"]);
+                    })
+                    article_vm.article = list;
+
+                    //完整功能
+                    layui.use(['laypage', 'layer'], function() {
+                        var laypage = layui.laypage,
+                            layer = layui.layer;
+                        laypage.render({
+                            elem: 'problem_page',
+                            count: count,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function(obj) {
+                                var index = obj.curr;
+                                var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id + "&passport_id=" + author_vm.passport_id + "&page=" + index;
+                                $.ajax({
+                                    type: "GET",
+                                    url: request_url,
+                                    success: function(data) {
+                                        if (data.status == 200) {
+                                            var ret_data = data.data;
+                                            var list = ret_data.data;
+                                            var count = ret_data.count;
+
+                                            list.forEach(function(item) {
+                                                item["date"] = date_util.time(item["created"]);
+                                            })
+                                            article_vm.article = list;
+                                            // article_vm.count = count;
+                                        } else {
+                                            layer.msg(data.msg, { icon: 5 });
+                                        }
+                                    }
+                                });
+
+                                // console.log(obj.curr);
+                            }
+                        });
+                    })
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    });
+
+    // 我的收藏
+    function myCollect() {
+        var request_url = host + "/api/user/article/collectList";
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    var list = ret_data.data;
+                    var count = ret_data.count;
+                    list.forEach(function(item) {
+                        item["date"] = date_util.time(item["created"]);
+                    })
+                    article_vm.article = list;
+
+                    //完整功能
+                    layui.use(['laypage', 'layer'], function() {
+                        var laypage = layui.laypage,
+                            layer = layui.layer;
+                        laypage.render({
+                            elem: 'problem_page',
+                            count: count,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function(obj) {
+                                var index = obj.curr;
+                                var request_url = host + "/api/user/article/collectList?page=" + index;
+                                $.ajax({
+                                    type: "GET",
+                                    url: request_url,
+                                    success: function(data) {
+                                        if (data.status == 200) {
+                                            var ret_data = data.data;
+                                            var list = ret_data.data;
+                                            var count = ret_data.count;
+
+                                            list.forEach(function(item) {
+                                                item["date"] = date_util.time(item["created"]);
+                                            })
+                                            article_vm.article = list;
+                                            article_vm.count = count;
+                                        } else {
+                                            layer.msg(data.msg, { icon: 5 });
+                                        }
+                                    }
+                                });
+
+                                // console.log(obj.curr);
+                            }
+                        });
+                    })
+
+                    console.log(ret_data);
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    }
+
+    // 提问列表
+    function problem(id) {
+
+        // 获取提问列表
+        var catalog_id = id;
+        var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id + "&passport_id=" + author_vm.passport_id;
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    var list = ret_data.data;
+                    var count = ret_data.count;
+                    list.forEach(function(item) {
+                        item["date"] = date_util.time(item["created"]);
+                    })
+                    article_vm.article = list;
+
+                    //完整功能
+                    layui.use(['laypage', 'layer'], function() {
+                        var laypage = layui.laypage,
+                            layer = layui.layer;
+                        laypage.render({
+                            elem: 'problem_page',
+                            count: count,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function(obj) {
+                                var index = obj.curr;
+                                var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id + "&passport_id=" + author_vm.passport_id + "&page=" + index;
+                                $.ajax({
+                                    type: "GET",
+                                    url: request_url,
+                                    success: function(data) {
+                                        if (data.status == 200) {
+                                            var ret_data = data.data;
+                                            var list = ret_data.data;
+                                            var count = ret_data.count;
+
+                                            list.forEach(function(item) {
+                                                item["date"] = date_util.time(item["created"]);
+                                            })
+                                            article_vm.article = list;
+                                            article_vm.count = count;
+                                        } else {
+                                            layer.msg(data.msg, { icon: 5 });
+                                        }
+                                    }
+                                });
+
+                                // console.log(obj.curr);
+                            }
+                        });
+                    })
+
+                    console.log(ret_data);
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    }
+
+    // 分享列表
+    function share(id) {
+
+        $("#reply").css("display", "none");
+        $("#article").css("display", "block");
+        // 获取提问列表
+        var catalog_id = id;
+        var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id + "&passport_id=" + author_vm.passport_id;
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    var list = ret_data.data;
+                    var count = ret_data.count;
+                    list.forEach(function(item) {
+                        item["date"] = date_util.time(item["created"]);
+                    })
+                    article_vm.article = list;
+
+                    //完整功能
+                    layui.use(['laypage', 'layer'], function() {
+                        var laypage = layui.laypage,
+                            layer = layui.layer;
+                        laypage.render({
+                            elem: 'problem_page',
+                            count: count,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function(obj) {
+                                var index = obj.curr;
+                                var request_url = host + "/api/user/article/list?catalog_id=" + catalog_id + "&passport_id=" + author_vm.passport_id + "&page=" + index;
+                                $.ajax({
+                                    type: "GET",
+                                    url: request_url,
+                                    success: function(data) {
+                                        if (data.status == 200) {
+                                            var ret_data = data.data;
+                                            var list = ret_data.data;
+                                            var count = ret_data.count;
+
+                                            list.forEach(function(item) {
+                                                item["date"] = date_util.time(item["created"]);
+                                            })
+                                            article_vm.article = list;
+                                            article_vm.count = count;
+                                        } else {
+                                            layer.msg(data.msg, { icon: 5 });
+                                        }
+                                    }
+                                });
+
+                                // console.log(obj.curr);
+                            }
+                        });
+                    })
+                    console.log(ret_data);
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    }
+
+    // 回答列表, 取评论表中内容
+    function reply() {
+
+        $("#reply").css("display", "block");
+        $("#article").css("display", "none");
+        var request_url = host + "/api/user/comment/reply?passport_id=" + author_vm.passport_id;
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    var list = ret_data.data;
+                    var count = ret_data.count;
+                    list.forEach(function(item) {
+                        item.date = date_util.time(item["created"], true);
+                    })
+                    reply_vm.contents = list;
+
+                    list.forEach(function(item) {
+                        var id = 'content' + item.id;
+                        document.getElementById(id).innerHTML = item.content;
+                    })
+
+                    //完整功能
+                    layui.use(['laypage', 'layer'], function() {
+                        var laypage = layui.laypage,
+                            layer = layui.layer;
+                        laypage.render({
+                            elem: 'reply_page',
+                            count: count,
+                            layout: ['count', 'prev', 'page', 'next', 'skip'],
+                            jump: function(obj) {
+                                var index = obj.curr;
+                                var request_url = host + "/api/user/comment/reply?passport_id=" + author_vm.passport_id + "&page=" + index;
+                                $.ajax({
+                                    type: "GET",
+                                    url: request_url,
+                                    success: function(data) {
+                                        if (data.status == 200) {
+                                            var ret_data = data.data;
+                                            var list = ret_data.data;
+                                            var count = ret_data.count;
+
+                                            list.forEach(function(item) {
+                                                item["date"] = date_util.time(item["created"], true);
+                                            })
+                                            reply_vm.contents = list;
+
+                                            list.forEach(function(item) {
+                                                var id = 'content' + item.id;
+                                                document.getElementById(id).innerHTML = item.content;
+                                            })
+                                        } else {
+                                            layer.msg(data.msg, { icon: 5 });
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    })
+                    // console.log(ret_data);
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    }
+
+    function logout() {
+        var request_url = host + "/api/user/logout";
+        var data = {};
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                console.log(data);
+                if (data.status == 200) {
+                    // 登出成功 清楚缓存
+                    Cookies.remove('user');
+                    Cookies.remove("redictUrl");
+                    user_vm.login = false;
+                    window.location.href = host + "/index.html";
+                } else {
+                    layer.msg(data.msg);
+                }
+            }
+        });
+    }
+    </script>
+</body>
+
+</html>

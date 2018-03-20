@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>帐号设置 - Py</title>
+    <link rel="stylesheet" href="/static/layui/font/font_24081_1u8t0gopzoxbt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1506053054561" />
+    <link rel="stylesheet" href="/static/layui/css/global.css" charset="utf-8" />
+</head>
+
+<body>
+    <div class="header">
+        <div class="main" ms-controller="user">
+            <div style="margin-top:18px; position: absolute;">
+                <a class="" style="color: #F0F0F0;" href="/">享你所想</a>
+            </div>
+            <div class="nav-user" :if="@login==false">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+            <ul class="layui-nav layui-layout-right" :if="@login==true">
+                <li class="layui-nav-item">
+                    <a href="/static/user/home_page.html">
+                        <img ms-attr="{src: @avert}" class="layui-nav-img">
+                        {{@name}}
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/static/user/setting.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe620;</i>基本设置</a></dd>
+                        <dd><a href="/static/user/home_page.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe68e;</i>我的空间</a></dd>
+                        <dd><a href="/static/user/message.html" ms-controller="message"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe63a;</i> 消息<span class="layui-badge" :if="@count>0">{{count}}</span></a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item"><a href="javascript:;" onclick="logout()"><i class="iconfont icon-tuichu" style="top: 0; font-size: 22px;"></i>退出</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="fly-user-main layui-clear" ms-controller="setting">
+        <div class="fly-panel fly-panel-user" pad20="">
+            <div class="layui-tab layui-tab-brief" lay-filter="user">
+                <ul class="layui-tab-title" id="LAY_mine">
+                    <li class="layui-this" lay-id="info">我的资料</li>
+                    <li lay-id="avatar">头像</li>
+                </ul>
+                <div class="layui-tab-content" style="padding: 20px 0;">
+                    <div class="layui-form layui-form-pane layui-tab-item layui-show">
+                        <div class="layui-form-item">
+                            <label for="L_username" class="layui-form-label">昵称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" id="L_username" name="username" required="" lay-verify="required" autocomplete="off" class="layui-input" ms-duplex="@name" />
+                            </div>
+                        </div>
+                        <div class="layui-form-item layui-form-text">
+                            <label for="L_sign" class="layui-form-label">签名</label>
+                            <div class="layui-input-block">
+                                <textarea placeholder="随便写些什么刷下存在感" id="L_sign" name="sign" autocomplete="off" class="layui-textarea" style="height: 80px;" ms-duplex="@signature"></textarea>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <a href="javascript:;" class="layui-btn" key="set-mine" lay-filter="*" onclick="modifyInfo()">确认修改</a>
+                        </div>
+                    </div>
+                    <div class="layui-form layui-form-pane layui-tab-item">
+                        <div class="layui-form-item">
+                            <div class="avatar-add">
+                                <p>建议尺寸168*168，支持jpg、png、gif</p>
+                                <button id="uploadImg" type="button" class="layui-btn upload-img"> <i class="layui-icon"></i>上传头像 </button>
+                                <img ms-attr="{src: @avert}" />
+                                <span class="loading"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script> -->
+    <script>
+    var host = alloy_setting.request_url;
+
+    layui.use('layer', function() {
+        var layer = layui.layer;
+    });
+
+    layui.use('element', function() {
+        var $ = layui.jquery,
+            element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+    });
+
+    user_vm = avalon.define({
+        $id: "user",
+        name: "",
+        avert: "",
+        token: "",
+        signature: "",
+        login: false
+    })
+
+    message_vm = avalon.define({
+        $id: "message",
+        count: 0,
+    })
+
+    vm = avalon.define({
+        $id: "setting",
+        avert: "",
+        name: "",
+        signature: "",
+        password: "",
+        new_password: "",
+        confirm_password: ""
+    })
+
+    if (Cookies.get("user") != undefined) {
+        var user = Cookies.getJSON("user");
+        user_vm.name = user.name;
+        user_vm.avert = "http://owgplcxzz.bkt.clouddn.com/" + user.avert;
+        user_vm.token = user.token_id;
+        user_vm.signature = user.signature;
+        user_vm.login = true;
+
+        vm.name = user.name;
+        vm.signature = user.signature;
+        vm.avert = "http://owgplcxzz.bkt.clouddn.com/" + user.avert;
+    }
+
+    $.ajaxSetup({
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('AUTHORIZATION', "token " + user_vm.token);
+        }
+    });
+
+    layui.use('element', function() {
+        var $ = layui.jquery,
+            element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+    });
+
+    layui.use('upload', function() {
+        var upload = layui.upload;
+        var request_url = host + "/api/image/token"
+        var token = "";
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            async: false,
+            success: function(data) {
+                if (data.status == 200) {
+                    token = data.data.token;
+                } else {
+                    if (data.status == 401) {
+                        Cookies.remove("user");
+                        Cookies.remove("redictUrl");
+                        window.location.href = host + "/index.html";
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#uploadImg' //绑定元素
+                ,
+            url: 'http://up.qiniu.com/' //上传接口
+                ,
+            data: { "token": token },
+            done: function(res) {
+                var hash = res.hash;
+                vm.avert = "http://owgplcxzz.bkt.clouddn.com/" + res.hash;
+                // 修改头像接口
+                var request_url = host + "/api/user/modifyInfo";
+                var data = { "avert": hash };
+                $.ajax({
+                    type: "POST",
+                    url: request_url,
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(data),
+                    success: function(data) {
+                        if (data.status == 200) {
+                            layer.msg("修改头像成功", { icon: 6 })
+                            // 修改缓存头像
+                            var user = Cookies.getJSON("user");
+                            user.avert = hash;
+                            Cookies.set("user", user);
+                            user_vm.avert = "http://owgplcxzz.bkt.clouddn.com/" + user.avert;
+
+                        } else {
+                            layer.msg(data.msg);
+                        }
+                    }
+                });
+                // console.log(res);
+                //上传完毕回调
+            },
+            error: function() {
+                //请求异常回调
+            }
+        });
+    });
+
+    function logout() {
+        var request_url = host + "/api/user/logout";
+        var data = {};
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                console.log(data);
+                if (data.status == 200) {
+                    // 登出成功 清楚缓存
+                    Cookies.remove('user');
+                    user_vm.login = false;
+                    // 回到indexd页面
+                    window.location.href = host + "/index.html";
+                } else {
+                    if (data.status == 401) {
+                        Cookies.remove("user");
+                        window.location.href = host + "/index.html";
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+    }
+
+    function modifyInfo() {
+
+        if (vm.name == "") {
+            layer.msg("昵称不能为空", { icon: 5 });
+            return;
+        };
+        var request_url = host + "/api/user/modifyInfo";
+        var data = { "name": vm.name, "signature": vm.signature }
+        console.log(data);
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                console.log(data);
+                if (data.status == 200) {
+                    // 修改用户信息
+                    user_vm.name = vm.name;
+                    user_vm.signature = vm.signature;
+                    var user = Cookies.getJSON("user");
+                    user.name = vm.name;
+                    user.signature = vm.signature;
+                    Cookies.set("user", user);
+                    layer.msg("修改成功", { icon: 6 });
+                } else {
+                    if (data.status == 200) {} else {
+                        if (data.status == 401) {
+                            Cookies.remove("user");
+                            window.location.href = host + "/index.html";
+                        } else {
+                            layer.msg(data.msg, { icon: 5 });
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 获取未读消息量
+    if (user_vm.login) {
+        var request_url = host + "/api/user/message/unread"
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    console.log(data);
+                    var count = data.data;
+                    message_vm.count = count;
+                } else {
+                    if (data.status == 401) {
+                        Cookies.remove("user");
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+    }
+
+    // function modifyPassword() {
+
+    //   if(vm.new_password != vm.confirm_password) {
+    //     layer.msg("两次新密码不一致", {icon: 5});
+    //   }
+
+    //   if (vm.password == "") {
+    //     layer.msg("当前密码不能为空", {icon: 5});
+    //   }
+    // }
+    </script>
+</body>
+
+</html>

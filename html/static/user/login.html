@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>登入</title>
+    <link rel="stylesheet" href="/static/layui/font/font_24081_1u8t0gopzoxbt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1506053054561" />
+    <link rel="stylesheet" href="/static/layui/css/global.css" charset="utf-8" />
+</head>
+
+<body>
+    <div class="header">
+        <div class="main">
+            <div style="margin-top:18px; position: absolute;">
+                <a class="" style="color: #F0F0F0;" href="/">享你所想</a>
+            </div>
+            <div class="nav-user">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+        </div>
+    </div>
+    <div class="main layui-clear">
+        <div class="fly-panel fly-panel-user" pad20="">
+            <div class="layui-tab layui-tab-brief" lay-filter="user">
+                <ul class="layui-tab-title">
+                    <li class="layui-this">登入</li>
+                </ul>
+                <div class="layui-form layui-tab-content" id="LAY_ucm" style="padding: 20px 0;">
+                    <div class="layui-tab-item layui-show" ms-controller="login">
+                        <div class="layui-form layui-form-pane">
+                            <div class="layui-form-item">
+                                <label for="L_email" class="layui-form-label">用户名</label>
+                                <div class="layui-input-inline">
+                                    <input id="L_email" name="email" required="" lay-verify="required" autocomplete="off" class="layui-input" placeholder="手机号或邮箱" ms-duplex="@name" />
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label for="L_pass" class="layui-form-label">密码</label>
+                                <div class="layui-input-inline">
+                                    <input type="password" id="L_pass" name="pass" required="" lay-verify="required" autocomplete="off" class="layui-input" ms-duplex="@password" />
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <a href="javascript:;" class="layui-btn" onclick="login()">立即登录</a>
+                                <span style="padding-left:20px;"> <a href="/static/user/forget.html">忘记密码？</a> </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <script>
+    var host = alloy_setting.request_url;
+    layui.use('layer', function() {
+        var layer = layui.layer;
+    });
+
+    vm = avalon.define({
+        $id: "login",
+        name: "",
+        password: ""
+    })
+
+    function login() {
+
+        // 判断登录名是邮箱还是手机号
+        if (vm.name.indexOf("@") != -1) {
+            var data = { "email": vm.name, "password": vm.password, "login_type": 1 };
+        } else {
+            var data = { "mobile": vm.name, "password": vm.password, "login_type": 1 };
+        }
+
+        var request_url = host + "/api/user/login";
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                    // 登录成功缓存用户信息
+                    Cookies.set('user', data.data);
+                    if (Cookies.get("redictUrl") != undefined) {
+                        window.location.href = Cookies.get("redictUrl");
+                    } else {
+                        window.location.href = host + "/index.html";
+                    }
+                } else {
+                    layer.msg(data.msg);
+                }
+            }
+        });
+
+    }
+    </script>
+</body>
+
+</html>

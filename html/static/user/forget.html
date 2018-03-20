@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <title>忘记密码</title>
+    <link rel="stylesheet" href="/static/layui/font/font_24081_1u8t0gopzoxbt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1506053054561" />
+    <link rel="stylesheet" href="/static/layui/css/global.css" charset="utf-8" />
+</head>
+
+<body>
+    <div class="header">
+        <div class="main">
+            <div style="margin-top:18px; position: absolute;">
+                <a class="" style="color: #F0F0F0;" href="/">享你所想</a>
+            </div>
+            <div class="nav-user">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+        </div>
+    </div>
+    <div class="main layui-clear" ms-controller="forget">
+        <div class="fly-panel fly-panel-user" pad20="">
+            <div class="layui-tab layui-tab-brief" lay-filter="user">
+                <ul class="layui-tab-title">
+                    <li class="layui-this">找回密码</li>
+                </ul>
+                <div class="layui-form layui-tab-content" id="LAY_ucm" style="padding: 20px 0;">
+                    <div class="layui-tab-item layui-show">
+                        <div class="layui-form layui-form-pane">
+                            <div class="layui-form-item">
+                                <label for="L_email" class="layui-form-label">注册账号</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="L_email" name="email" required="" lay-verify="required" autocomplete="off" class="layui-input" placeholder="手机号或邮箱" ms-duplex="@name" />
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label for="img_code" class="layui-form-label">图片验证码</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" id="img_code" name="img_code" required="" lay-verify="required" autocomplete="off" class="layui-input" ms-duplex="@img_code" />
+                                </div>
+                                <div class="layui-form-mid layui-word-aux">
+                                    <img ms-attr="{src: @img}" onclick="changeImg()" />
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <a class="layui-btn" alert="1" lay-filter="*" onclick="submit()">提交</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <script>
+    var host = alloy_setting.request_url;
+
+    layui.use('layer', function() {
+        var layer = layui.layer;
+    });
+
+    var vm = avalon.define({
+        $id: "forget",
+        img_code: "", // 用户输入的图片验证码
+        name: "",
+        img: "",
+        uid: "",
+
+    })
+
+    $(document).ready(function() {
+
+        // 页面加载后获取图片验证码 缓存验证码 uid
+        var request_url = host + "/api/user/getImageCode";
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var return_data = data.data;
+                    var uid = return_data.key;
+                    var value = return_data.value;
+                    var code = return_data.code;
+                    vm.uid = uid
+                    vm.img = "data:image/png;base64," + value
+                    Cookies.set(uid, code);
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    });
+
+    function changeImg() {
+
+        var request_url = host + "/api/user/getImageCode";
+        $.ajax({
+            type: "GET",
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var return_data = data.data;
+                    var uid = return_data.key;
+                    var value = return_data.value;
+                    var code = return_data.code;
+                    vm.uid = uid
+                    vm.img = "data:image/png;base64," + value
+                    Cookies.set(uid, code);
+                } else {
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+    }
+
+    function submit() {
+
+        if (vm.name == "") {
+            layer.msg("账号错误", { icon: 5 });
+            return;
+        };
+
+        var code = Cookies.get(vm.uid);
+        console.log(code);
+        console.log(vm.img_code);
+
+        if (vm.img_code.toLowerCase() != code.toLowerCase()) {
+            layer.msg("验证码错误", { icon: 5 });
+            return;
+        }
+
+        if (vm.name.indexOf("@") == -1) {
+
+            if (!SimpoValidate.mobile(vm.name)) {
+                layer.msg('账号错误', { icon: 5 });
+                return;
+            }
+
+            // 判断用户注册？
+            var request_url = host + "/api/user/isExist";
+            var data = { "mobile": vm.name };
+            var is_exist = false;
+            $.ajax({
+                type: "POST",
+                url: request_url,
+                contentType: "application/json",
+                dataType: "json",
+                async: false,
+                data: JSON.stringify(data),
+                success: function(data) {
+                    // console.log(data);
+                    if (data.status == 200) {
+                        if (!data.data) {
+                            layer.msg("该账号未注册", { icon: 5 });
+                        } else {
+                            is_exist = true;
+                        }
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            });
+
+            if (is_exist) {
+                // 手机
+                var request_url = host + "/api/user/sendMobile"
+                var img_code = vm.img_code.toLowerCase();
+                var data = { "mobile": vm.name, "uid": vm.uid, "code": img_code };
+                console.log(data);
+                $.ajax({
+                    type: "POST",
+                    url: request_url,
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(data),
+                    success: function(data) {
+                        // console.log(data);
+                        if (data.status == 200) {
+                            layer.msg("验证码发送成功", { icon: 6 });
+                            Cookies.set("mobile", vm.name);
+                            // 打开忘记密码页面
+                            window.location.href = host + "/static/user/reset_password.html";
+                        } else {
+                            layer.msg(data.msg, { icon: 5 });
+                        }
+                    }
+                });
+            }
+        } else {
+            // 邮箱
+            if (!SimpoValidate.email(vm.name)) {
+                layer.msg('账号错误', { icon: 5 });
+                return;
+            }
+
+            var request_url = host + "/api/user/isExist";
+            var data = { "email": vm.name };
+            var is_exist = false;
+            $.ajax({
+                type: "POST",
+                url: request_url,
+                contentType: "application/json",
+                dataType: "json",
+                async: false,
+                data: JSON.stringify(data),
+                success: function(data) {
+                    // console.log(data);
+                    if (data.status == 200) {
+                        if (!data.data) {
+                            layer.msg("该账号未注册", { icon: 5 });
+                        } else {
+                            is_exist = true;
+                        }
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            });
+
+            if (is_exist) {
+                var request_url = host + "/api/user/sendEmail";
+                var data = { "email": vm.name };
+                $.ajax({
+                    type: "POST",
+                    url: request_url,
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(data),
+                    success: function(data) {
+                        if (data.status == 200) {
+                            layer.msg("验证码发送成功", { icon: 6 });
+                            Cookies.set("email", vm.name);
+                            // 打开忘记密码页面
+                            window.location.href = host + "/static/user/reset_password.html";
+                        } else {
+                            layer.msg(data.msg, { icon: 5 });
+                        }
+                    }
+                });
+
+            }
+        }
+    }
+    </script>
+</body>
+
+</html>

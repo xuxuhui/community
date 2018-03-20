@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>PY</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/font/font_24081_lyaxcfn8fp1iqkt9.css" />
+    <link rel="stylesheet" href="/static/layui/css/layui.css?t=1506653081836" />
+    <link rel="stylesheet" href="/static/layui/css/global.css?t=1506653081836" charset="utf-8" />
+</head>
+
+<body>
+    <div class="header">
+        <div class="main" ms-controller="user">
+            <div style="margin-top:18px; position: absolute;">
+             <a class="" style="color: #F0F0F0;" href="/">享你所想</a>
+            </div>
+            <div class="nav-user" :if="@login==false">
+                <a class="unlogin" href="/static/user/login.html"><i class="iconfont icon-touxiang"></i></a>
+                <span><a href="/static/user/login.html">登入</a><a href="/static/user/reg.html">注册</a></span>
+            </div>
+            <ul class="layui-nav layui-layout-right" :if="@login==true">
+                <li class="layui-nav-item">
+                    <a href="/static/user/home_page.html">
+                        <img ms-attr="{src: @avert}" class="layui-nav-img">
+                        {{@name}}
+                    </a>
+                    <dl class="layui-nav-child">
+                        <dd><a href="/static/user/setting.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe620;</i>基本设置</a></dd>
+                        <dd><a href="/static/user/home_page.html"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe68e;</i>我的空间</a></dd>
+                        <dd><a href="/static/user/message.html" ms-controller="message"><i class="layui-icon" style="font-size: 20px; color: #1E9FFF;">&#xe63a;</i> 消息<span class="layui-badge" :if="@count>0">{{count}}</span></a></dd>
+                    </dl>
+                </li>
+                <li class="layui-nav-item"><a href="javascript:;" onclick="logout()"><i class="iconfont icon-tuichu" style="top: 0; font-size: 22px;"></i>退出</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="layui-container">
+        <div class="layui-row layui-col-space15">
+            <div class="fly-column layui-col-md8">
+                <div class="fly-tab" ms-controller="catalog">
+                    <div class="layui-tab layui-tab-brief">
+                        <ul class="layui-tab-title">
+                            <li :for="(index, el) in @catalog" :if="@index==0" ms-class="@id==@el.id? @acvtive : ''" ms-attr="{id: ''}" onclick="getArticle(this)"> 
+                                {{el.name}}
+                            </li>
+                            <li :for="(index, el) in @catalog" :if="@index!=0" ms-attr="{id: @el.id}" ms-class="@id==@el.id? @acvtive : ''" onclick="getArticle(this)" > 
+                                {{el.name}}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md8 detail" ms-controller="user">
+                <div class="fly-panel detail-box" ms-controller="article">
+                    <h1>{{title}}</h1>
+                    <div class="fly-detail-info">
+                        <div class="fly-admin-box" data-id="15695"> </div>
+                        <span class="fly-list-nums">             
+	                        <a href="#comment"><i class="iconfont" title="回答">&#xe60c;</i> {{reply}} </a>            
+	                        <i class="iconfont" title="人气">&#xe60b;</i> {{pv}}          
+                        </span>
+                    </div>
+                    <div class="detail-about">
+                        <a class="fly-avatar" href="javascript:;" ms-click="@user_detail()">            
+                   			<img  ms-attr="{src: @avert}">          
+                   		</a>
+                        <div class="fly-detail-user">
+                            <a href="javascript:;" class="fly-link">
+                                <cite>{{passport_name}}</cite> <i class="iconfont icon-renzheng"></i>
+                            </a> <span>{{created}}</span>
+                        </div>
+                        <div class="detail-hits" id="LAY_jieAdmin" data-id="15695" :if="@login==true">
+                            <span class="layui-btn layui-btn-mini jie-admin" type="collect" :if="@is_collect==false" onclick="collect()">收藏</span>
+                            <span class="layui-btn layui-btn-mini jie-admin layui-btn-danger" type="collect" :if="@is_collect==true" onclick="cancelCollect()">取消收藏</span>
+                        </div>
+                    </div>
+                    <div ms-attr="{id: @id}" class="detail-body photos">
+                    </div>
+                </div>
+                <div class="fly-panel detail-box" id="flyReply" ms-controller="comment">
+                    <fieldset class="layui-elem-field layui-field-title" style="text-align: center;">
+                        <legend>回帖</legend>
+                    </fieldset>
+                    <ul class="jieda" :for="(index, el) in @comment">
+                        <li data-id="59901">
+                            <a name="item-1506575854469"></a>
+                            <div class="detail-about detail-about-reply">
+                                <a class="fly-avatar" href="javascript:;">                
+                            	<img ms-attr="{src: @el.avert}" ms-attr="{alt: @el.passport_name}">              
+                            	</a>
+                                <div class="fly-detail-user">
+                                    <a href="javascript:;" class="fly-link">
+                                        <cite>{{el.passport_name}}</cite>
+	                                </a>
+                                </div>
+                                <div class="detail-hits"> <span>{{el.date}}</span> </div>
+                            </div>
+                            <div class="detail-body jieda-body photos"  ms-attr="{id: @el.id}">
+                            </div>
+                            <div class="jieda-reply">
+                                <span :if="@el.is_favor==true" class="jieda-zan zanok" type="zan" onclick="favor(this)" ms-attr="{el: @el.id}">
+		                            <i class="iconfont icon-zan"></i>              
+		                            <em>{{el.favor_count}}</em>           
+	                             </span>
+	                             <span :if="@el.is_favor==false" class="jieda-zan" type="zan" onclick="favor(this)" ms-attr="{el: @el.id}">
+		                            <i class="iconfont icon-zan"></i>              
+		                            <em>{{el.favor_count}}</em>           
+	                             </span>
+                                 <input type="" name="" value="" ms-attr="{id: 'index'+el.id}" style="display:none"/>
+                                 <span type="reply" onclick="reply(this)" ms-attr="{reply_id: @el.id}">
+                                 	<i class="iconfont icon-svgmoban53"></i>              回复           
+                                 </span>
+                                 <div class="layui-form layui-form-pane" style="display:none">
+                                    <div class="layui-form-item layui-form-text"> <a name="comment"></a>
+                                        <div class="layui-input-block">
+                                            <textarea  ms-attr="{id: 'content'+el.id}" name="content" required lay-verify="required" placeholder="请输入内容" class="layui-textarea fly-editor" style="height: 150px;"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <input type="hidden" name="jid" value="15598">
+                                        <input type="hidden" name="daPages" value="1">
+                                         <a class="layui-btn" lay-filter="*" onclick="cancel(this)">取消</a>
+                                        <a class="layui-btn" lay-filter="*" onclick="replySubmit(this)" ms-attr="{reply_id: @el.id}">提交</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <div id="demo7" style="text-align: center;"></div>
+                    <div class="layui-form layui-form-pane">
+                        <div class="layui-form-item layui-form-text"> <a name="comment"></a>
+                            <div class="layui-input-block">
+                                <textarea id="L_content" name="content" required lay-verify="required" placeholder="请输入内容" class="layui-textarea fly-editor" style="height: 150px;"></textarea>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <input type="hidden" name="jid" value="15598">
+                            <input type="hidden" name="daPages" value="1">
+                            <a class="layui-btn" lay-filter="*" onclick="submit()">提交回复</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="/static/layui/layui.js"></script>
+    <script src="/static/app/alloy.js"></script>
+    <script src="/static/js-cookie/src/js.cookie.js"></script>
+    <script src="/static/node_modules/avalon2/dist/avalon.js"></script>
+    <script src="/static/jquery/jquery-3.2.1.min.js"></script>
+    <script>
+    var host = alloy_setting.request_url;
+    var img_host = alloy_setting.img_host;
+
+    layui.use('element', function() {
+            var $ = layui.jquery,
+            element = layui.element; //Tab的切换功能，切换事件监听等，需要依赖element模块
+    });
+
+    // 头用户信息
+    user_vm = avalon.define({
+        $id: "user",
+        name: "",
+        avert: "",
+        token: "",
+        signature: "",
+        login: false,
+        user_detail: function() {
+            var url = host + "/static/user/home_page.html?id=" + article_vm.passport_id;
+            window.location.href = url;
+        }
+    })
+
+    message_vm = avalon.define({
+        $id: "message",
+        count: 0,
+    })
+
+    catalog_vm = avalon.define({
+        $id: "catalog",
+        catalog: [],
+        count: "", 
+        id: 2,
+        acvtive: "layui-this",
+    })
+
+    article_vm = avalon.define({
+        $id: "article",
+        id: "",
+        id_index: "",
+        passport_id: "",
+        passport_name: "",
+        avert: "",
+        title: "",
+        content: "",
+        pv: "",
+        reply: "",
+        created: "",
+        is_collect: false,
+    })
+
+    comment_vm = avalon.define({
+        $id: "comment",
+        comment: [],
+    })
+
+    layui.use('layer', function() {
+        var layer = layui.layer;
+    });
+
+    layui.use('code', function() { //加载code模块
+        layui.code({
+            encode: true //是否转义html标签。默认不开启
+        });
+    });
+
+    if (Cookies.get("user") != undefined) {
+        var user = Cookies.getJSON("user");
+        user_vm.name = user.name;
+        user_vm.avert = "http://owgplcxzz.bkt.clouddn.com/" + user.avert;
+        user_vm.token = user.token_id;
+        user_vm.login = true;
+    }
+
+    if (user_vm.token != "") {
+        $.ajaxSetup({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('AUTHORIZATION', "token " + user_vm.token);
+            }
+        });
+    }
+
+    // 富文本图片上传
+    var index = "";
+    layui.use('layedit', function() {
+        var layedit = layui.layedit;
+
+        layedit.set({
+            uploadImage: {
+                url: host + "/api/image/upload" //接口url
+                    ,
+                contentType: 'multipart/form-data',
+            }
+        });
+
+        index = layedit.build('L_content', {
+            tool: ['face', 'image', '|', 'strong', "italic", "underline"]
+        }); //建立编辑器
+
+    });
+
+    // 获取分类
+    if (Cookies.getJSON("catalog") != undefined) {
+        var catalog = Cookies.getJSON("catalog");
+        catalog_vm.catalog = catalog.data;
+    }
+
+    function logout() {
+        var request_url = host + "/api/user/logout";
+        var data = {};
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                    // 登出成功 清楚缓存
+                    Cookies.remove('user');
+                    Cookies.remove('redictUrl');
+                    user_vm.login = false;
+                    window.location.href = host + "/index.html";
+                } else {
+                    layer.msg(data.msg);
+                }
+            }
+        });
+    }
+
+    function getArticle(obj) {
+        var catalog_id = $(obj).attr("id");
+        window.location.href = host + "/index.html?catalog_id=" + catalog_id;
+    }
+
+    // 提交评论
+    function submit() {
+
+        var layedit = layui.layedit;
+        var content = layedit.getContent(index)
+        if (content == "") {
+            layer.msg("内容不能为空", { icon: 5 });
+            return;
+        }
+
+        var data = { "article_id": article_vm.id_index, "content": content, "catalog_type": 2 }
+        var request_url = host + "/api/user/comment/create"
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                    // 评论成功  添加绑定评论
+                    var item = data.data;
+                    item.avert = user_vm.avert;
+                    item["date"] = date_util.time(item["created"]);
+                    item["passport_name"] = user_vm.name;
+                    comment_vm.comment.push(item);
+                    document.getElementById(item.id).innerHTML = item.content;
+                    layui.use('layedit', function() {
+                        var layedit = layui.layedit;
+
+                        layedit.set({
+                            uploadImage: {
+                                url: host + "/api/image/upload" //接口url
+                                    ,
+                                contentType: 'multipart/form-data',
+                            }
+                        });
+
+                        index = layedit.build('L_content', {
+                            tool: ['face', 'image', '|', "italic", "underline"]
+                        }); //建立编辑器
+
+                    });
+                    layer.msg("评论成功", { icon: 6 });
+                } else {
+                    if (data.status == 401) {
+                        layer.msg("请先登录", { icon: 5 });
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+    }
+
+    // 点赞与取消点赞 
+    function favor(obj) {
+    	var id = $(obj).attr("el");
+    	// 判断当前点赞状态
+    	var is_favor = false;
+    	comment_vm.comment.forEach(function(item) {
+    		// console.log(item.id);
+    		if (item.id == id) {
+    			if (!item.is_favor) {
+    				is_favor = true;
+    			}
+    			return;
+    		}
+    	})
+
+    	var data = {"comment_id": id};
+    	var request_url = host + "/api/user/comment/favor";
+
+    	if (!is_favor) {
+    		request_url = host + "/api/user/comment/cancelFavor";
+    	}
+
+    	$.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                	var count = data.data;
+                	comment_vm.comment.forEach(function(item) {
+			    		if (item.id == id) {
+			    			item.is_favor = is_favor;
+			    			item.favor_count = count;
+			    			return;
+			    		}
+			    	})
+
+                } else {
+                    if (data.status == 401) {
+                    	Cookies.remove("user");
+                        layer.msg("请先登录", { icon: 5 });
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+
+    }
+
+    function cancel(obj) {
+        $(obj).parent().parent().css({"display": "none"});
+    }
+
+    function reply(obj) {
+        var id = $(obj).attr("reply_id");
+
+        var idx = "";
+        layui.use('layedit', function() {
+            var layedit = layui.layedit;
+
+            layedit.set({
+                uploadImage: {
+                    url: host + "/api/image/upload" //接口url
+                        ,
+                    contentType: 'multipart/form-data',
+                }
+            });
+
+            idx = layedit.build('content' + id, {
+                tool: ['face', 'image', '|', "italic", "underline"]
+            }); //建立编辑器
+
+        });
+
+        $("#index" + id).val(idx);
+
+        $(obj).next().css({"display": "block"});
+    }
+
+    function replySubmit(obj) {
+
+        var id = $(obj).attr("reply_id");
+        var idx = $("#index" + id).val();
+        var layedit = layui.layedit;
+        var content = layedit.getContent(idx);
+        if (content == "") {
+            layer.msg("内容不能为空", { icon: 5 });
+            return;
+        }
+
+        var reply_id = "";
+        var reply_name = "";
+        comment_vm.comment.forEach(function(item) {
+            if (item.id == id) {
+                reply_id = item.passport_id;
+                reply_name = item.passport_name;
+            }
+        })
+        var data = {"parent_id": id, "article_id": article_vm.id_index, "content": content, "catalog_type": 2};
+
+        var request_url = host + "/api/user/comment/create"
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                    // 评论成功  添加绑定评论
+                    var item = data.data;
+                    item.avert = user_vm.avert;
+                    item["date"] = date_util.time(item["created"]);
+                    item["passport_name"] = user_vm.name;
+                    comment_vm.comment.push(item);
+                    var text = "@" + "<a href='javascript:;' class=fly-aite onclick=homePage(" + reply_id + ")><cite>" + reply_name + "</cite></a>" + item.content;
+                    document.getElementById(item.id).innerHTML = text;
+                    $(obj).parent().parent().css({"display": "none"});
+                    layer.msg("评论成功", { icon: 6 });
+                } else {
+                    if (data.status == 401) {
+                        layer.msg("请先登录", { icon: 5 });
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+    }
+
+    // 获取文章详情, 回复, 浏览, 加一次pv
+    $(document).ready(function() {
+
+        var parama = window.location.search
+        var url_parse = url_util;
+        var obj = url_parse.parama(parama)
+        var catalog_id = "";
+        if (obj['catalog_id'] != undefined) {
+            catalog_id = obj["catalog_id"];
+            catalog_vm.id = catalog_id;
+        }
+        var id = obj["id"]
+
+        if (id == undefined) {
+            layer.msg("参数错误");
+        }
+
+        var request_url = host + "/api/user/article/addPv";
+        var data = {"article_id": id};
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            async: false,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                    article_vm.pv += 1;
+                }
+            }
+        });
+
+        // 获取未读消息量
+        if (user_vm.login) {
+            var request_url = host + "/api/user/message/unread"
+            $.ajax({
+                type: "GET",
+                url: request_url,
+                success: function(data) {
+                    if (data.status == 200) {
+                        var count = data.data;
+                        message_vm.count = count;
+                    } else {
+                        if (data.status == 401) {
+                            Cookies.remove("user");
+                        } else {
+                            layer.msg(data.msg, { icon: 5 });
+                        }
+                    }
+                }
+            });
+        }
+
+        var request_url = host + "/api/user/article/detail?id=" + id;
+
+        var flag = true;
+        $.ajax({
+            type: "GET",
+            async: false,
+            url: request_url,
+            success: function(data) {
+                if (data.status == 200) {
+                    var ret_data = data.data;
+                    article_vm.passport_id = ret_data.passport_id;
+                    article_vm.passport_name = ret_data.passport_name;
+                    article_vm.avert = img_host + ret_data.avert;
+                    article_vm.title = ret_data.title;
+                    article_vm.content = ret_data.content;
+                    article_vm.pv = ret_data.pv;
+                    article_vm.id = "article" + ret_data.id;
+                    article_vm.id_index = ret_data.id;
+                    article_vm.created = date_util.time(ret_data["created"]);
+                    article_vm.is_collect = ret_data.is_collect;
+                    document.getElementById(article_vm.id).innerHTML = ret_data.content;
+                } else {
+                    flag = false;
+                    layer.msg(data.msg, { icon: 5 });
+                }
+            }
+        });
+
+        // 获取评论 TODO
+        if (flag) {
+            var request_url = host + "/api/user/comment/list?article_id=" + id;
+            $.ajax({
+                type: "GET",
+                async: false,
+                url: request_url,
+                success: function(data) {
+                    if (data.status == 200) {
+                        var ret_data = data.data;
+                        var list = ret_data.data;
+                        article_vm.reply = ret_data.count;
+                        list.forEach(function(item) {
+                            item.avert = img_host + item.avert;
+                            item["date"] = date_util.time(item["created"]);
+                        })
+                        comment_vm.comment = list;
+
+                        list.forEach(function(item) {
+                            document.getElementById(item.id).innerHTML = item.content;
+                        })
+
+                        if (article_vm.reply > 0) {
+
+                            layui.use(['laypage', 'layer'], function(){
+                              var laypage = layui.laypage
+                              ,layer = layui.layer;
+                              
+                              //完整功能
+                              laypage.render({
+                                elem: 'demo7'
+                                ,count: ret_data.count
+                                ,layout: ['count', 'prev', 'page', 'next', 'skip']
+                                ,jump: function(obj){
+                                    var curr = obj.curr;
+                                    var request_url = host + "/api/user/comment/list?page=" + curr + "&article_id=" + id;
+                                    $.ajax({
+                                        type: "GET",
+                                        url: request_url,
+                                        success: function(data) {
+                                            if (data.status == 200) {
+                                                var ret_data = data.data;
+                                                var list = ret_data.data;
+                                                article_vm.reply = ret_data.count;
+                                                list.forEach(function(item) {
+                                                    item.avert = img_host + item.avert;
+                                                    item["date"] = date_util.time(item["created"]);
+                                                })
+                                                comment_vm.comment = list;
+
+                                                list.forEach(function(item) {
+                                                    if (item.layer > 1) {
+                                                        var text = "@" + "<a href='javascript:;' class=fly-aite onclick=homePage(" + item.reply_id + ")><cite>" + item.reply_name + "</cite></a>" + item.content;
+                                                         document.getElementById(item.id).innerHTML = text;
+                                                    } else {
+                                                        document.getElementById(item.id).innerHTML = item.content;
+                                                    }
+                                                })
+                                            } else {
+                                                layer.msg(data.msg, { icon: 5 });
+                                            }
+                                        }
+                                    });
+                                }
+                              });
+                            })
+                        }
+                        // console.log(data);
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            });
+        } else {
+            return;
+        }
+    });
+
+    // 收藏
+    function collect() {
+
+        var request_url = host + "/api/user/article/collect"
+        var data = {"article_id": article_vm.id_index};
+        console.log(data);
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                    article_vm.is_collect = true;
+                } else {
+                    if (data.status == 401) {
+                        Cookies.remove("user");
+                        user_vm.login = false;
+                        layer.msg("请先登录", { icon: 5 });
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+    }
+
+    // 取消收藏
+    function cancelCollect() {
+
+        var request_url = host + "/api/user/article/cancelCollect"
+        var data = {"article_id": article_vm.id_index};
+        console.log(data);
+        $.ajax({
+            type: "POST",
+            url: request_url,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(data),
+            success: function(data) {
+                if (data.status == 200) {
+                    article_vm.is_collect = false;
+                } else {
+                    if (data.status == 401) {
+                        Cookies.remove("user");
+                        user_vm.login = false;
+                        layer.msg("请先登录", { icon: 5 });
+                    } else {
+                        layer.msg(data.msg, { icon: 5 });
+                    }
+                }
+            }
+        });
+    }
+
+    function homePage(value) {
+        console.log(value);
+        var url = host + "/static/user/home_page.html?id=" + value;
+        window.location.href = url;
+    }
+    </script>
+</body>
+
+</html>
