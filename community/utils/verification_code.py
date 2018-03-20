@@ -38,14 +38,14 @@ class VerificationCode(object):
                               bg_color=(255, 255, 255),
                               fg_color=(0, 0, 255),
                               font_size=100,
-                              font_type="./DejaVuSans.ttf",
+                              font_type="./arial.ttf",
                               length=4,
                               draw_lines=False,
                               n_line=(1, 2),
                               draw_points=True,
                               point_chance=2,
                               save_img=False,
-                              code_length=6):
+                              code_length=4):
         """
         生成验证码图片
         :param size: 图片的大小，格式（宽，高），默认为(120, 30)
@@ -101,10 +101,10 @@ class VerificationCode(object):
             strs = ' %s ' % ' '.join(c_chars)  # 每个字符前后以空格隔开
 
             # font = ImageFont.truetype(font_type, font_size)
-            # font = ImageFont.truetype("arial.ttf", 15)
+            font = ImageFont.truetype("arial.ttf", 15)
             # font = ImageFont.truetype('/Library/Fonts/Arial.ttf', 15)
             # print(help(ImageFont.load_default))
-            font = ImageFont.load_default()
+            # font = ImageFont.load_default()
             print(help(font.font))
             font_width, font_height = font.getsize(strs)
 

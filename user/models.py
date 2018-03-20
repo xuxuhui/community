@@ -8,13 +8,13 @@ from enum import Enum
 class Passport(models.Model):
     """docstring for Passport"""
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=50)
-    avert = models.CharField(max_length=50)  # 头像
-    signature = models.CharField(max_length=1000)  # 签名
-    mobile = models.CharField(max_length=20)
-    email = models.CharField(max_length=50)
-    password = models.CharField(max_length=50)  # 加密后密码
-    created = models.IntegerField()
+    name = models.CharField(max_length=50, default='')
+    avert = models.CharField(max_length=50, default='')  # 头像
+    signature = models.CharField(max_length=1000, default='')  # 签名
+    mobile = models.CharField(max_length=20, null=True)
+    email = models.CharField(max_length=50, null=True)
+    password = models.CharField(max_length=100, default='')  # 加密后密码
+    created = models.IntegerField(default=0)
 
     class Meta:
         db_table = 'passport'
@@ -24,13 +24,13 @@ class Passport(models.Model):
 class Token(models.Model):
     """docstring for  Token"""
     passport_id = models.IntegerField(primary_key=True)
-    token_id = models.CharField(max_length=60)
-    start_time = models.IntegerField()
-    expire_time = models.IntegerField()
-    login_type = models.IntegerField()
-    updated = models.IntegerField()
-    created = models.IntegerField()
-    version = models.IntegerField()
+    token_id = models.CharField(max_length=60, default='')
+    start_time = models.IntegerField(default=0)
+    expire_time = models.IntegerField(default=0)
+    login_type = models.IntegerField(null=True)
+    updated = models.IntegerField(null=True)
+    created = models.IntegerField(null=True)
+    version = models.IntegerField(null=True)
 
     class LoginType(Enum):
         """docstring for LoginType"""
@@ -51,14 +51,14 @@ class Token(models.Model):
 class Workspace(models.Model):
     """docstring for workspace"""
     passport_id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=100)
-    avert = models.CharField(max_length=50)
-    signature = models.CharField(max_length=1000)
-    update_time = models.IntegerField()
-    token_id = models.CharField(max_length=60)
-    start_time = models.IntegerField()
-    expire_time = models.IntegerField()
-    login_type = models.IntegerField()
+    name = models.CharField(max_length=100, blank=True)
+    avert = models.CharField(max_length=50, blank=True)
+    signature = models.CharField(max_length=1000, blank=True)
+    update_time = models.IntegerField(null=True)
+    token_id = models.CharField(max_length=60, null=True)
+    start_time = models.IntegerField(null=True)
+    expire_time = models.IntegerField(null=True)
+    login_type = models.IntegerField(null=True)
 
 
 # 文章等分类表
@@ -151,24 +151,26 @@ class Comment(models.Model):
 # 评论点赞
 class CommentFavour(models.Model):
     """docstring for Comment"""
-    comment_id = models.IntegerField(primary_key=True)
-    passport_id = models.IntegerField(primary_key=True)
+    comment_id = models.IntegerField()
+    passport_id = models.IntegerField()
 
     class Meta:
         """docstring for Meta"""
         db_table = "comment_favour"
+        unique_together = ('comment_id', 'passport_id')
 
 
 # 收藏文章列表
 class Collect(models.Model):
     """docstring for  Collect"""
-    passport_id = models.IntegerField(primary_key=True)
-    article_id = models.IntegerField(primary_key=True)
+    passport_id = models.IntegerField()
+    article_id = models.IntegerField()
     created = models.IntegerField()
 
     class Meta:
         """docstring for Meta"""
         db_table = "collect"
+        unique_together = ('passport_id', 'article_id')
 
 
 # 关注的人列表
